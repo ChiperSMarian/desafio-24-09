@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Panel de Alertas — Dashboard</title>
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #0f1724;
+    --panel: #0b1220;
+    --muted: #9aa6bf;
+    --text: #e6eef8;
+    --accent: #7c5cff;
+    --accent-2: #06b6d4;
+    --success: #16a34a;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --card: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    --glass: rgba(255,255,255,0.03);
+    --glass-2: rgba(255,255,255,0.02);
+    --radius: 12px;
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#071126 0%, #051021 100%);font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color:var(--text)}
+  .wrap{max-width:1200px;margin:28px auto;padding:20px}
+  header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+  .logo{
+    width:56px;height:56px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:20px;box-shadow:0 6px 20px rgba(124,92,255,0.18)
+  }
+  h1{margin:0;font-size:20px}
+  p.lead{margin:0;color:var(--muted);font-size:13px}
+
+  .controls{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px;align-items:center}
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:12px;
+    box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+    border:1px solid rgba(255,255,255,0.02);
+  }
+  .select {
+    font-size:14px;
+    padding:8px 12px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.06);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+    color: var(--text);
+    min-width:200px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    position: relative;
+  }
+  .select option { background: #071126; color: var(--text); }
+  .select::-ms-expand { display: none; }
+  .select-wrapper { position: relative; display:inline-block; }
+  .select-wrapper::after{
+    content: "▾";
+    position: absolute;
+    right:10px;
+    top:50%;
+    transform:translateY(-50%);
+    color:rgba(255,255,255,0.65);
+    pointer-events:none;
+    font-size:12px;
+  }
+
+  .btn, .checkbox{
+    font-size:14px;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;
+  }
+  .btn{
+    cursor:pointer;background:linear-gradient(90deg,var(--accent), #a67bff);color:white;border:none;box-shadow:0 8px 22px rgba(124,92,255,0.12);transition:transform .12s ease, box-shadow .12s;
+  }
+  .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+  .btn:active{transform:translateY(1px)}
+  .btn.ghost{background:transparent;border:1px dashed rgba(255,255,255,0.04)}
+  .btn.warn{background:linear-gradient(90deg,var(--warning), #fbbf24); color:#041827}
+  .small{font-size:12px;color:var(--muted)}
+
+  .summaries{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+  .summary{flex:1;min-width:160px;padding:12px;border-radius:12px;background:var(--glass);display:flex;flex-direction:column;gap:8px}
+  .summary .num{font-size:20px;font-weight:700}
+  .summary .lbl{color:var(--muted);font-size:12px}
+
+  .table-wrap{
+    margin-top:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);
+    overflow-x: auto; overflow-y: hidden;
+  }
+  table{ width:max-content; min-width:100%; border-collapse:collapse; font-size:13px; }
+  thead th{position:sticky;top:0;background:rgba(10,16,28,0.9);backdrop-filter:blur(4px);padding:10px;text-align:left;color:var(--muted);font-weight:600}
+  tbody td{padding:9px;border-top:1px solid rgba(255,255,255,0.02);vertical-align:middle;color:var(--text)}
+  tbody tr:nth-child(even){background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00))}
+  .badge{display:inline-block;padding:6px 8px;border-radius:999px;font-size:12px;font-weight:700}
+  .badge.low{background:rgba(22,163,74,0.12);color:var(--success)}
+  .badge.medium{background:rgba(245,158,11,0.12);color:var(--warning)}
+  .badge.high{background:rgba(239,68,68,0.12);color:var(--danger)}
+  .badge.critical{background:linear-gradient(90deg,#ef4444,#ef6a6a);color:white}
+
+  .empty-message { padding: 30px; text-align:center; color: var(--muted); font-size: 15px; }
+  .empty-message strong { color: var(--text); }
+
+  .loader{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,0.08);border-top-color:var(--accent);animation:spin 0.8s linear infinite;display:inline-block;vertical-align:middle}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .log{margin-top:14px;background:var(--glass-2);padding:12px;border-radius:10px;color:var(--muted);font-size:13px;max-height:160px;overflow:auto}
+
+  @media (max-width:880px){
+    .select{min-width:140px}
+    .controls{flex-direction:column;align-items:flex-start}
+    .summories{flex-direction:column}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">AL</div>
+      <div>
+        <h1>Panel de Alertas</h1>
+        <p class="lead">Visualiza los últimos ataques por cliente y tipo — rápido y con estilo.</p>
+      </div>
+    </header>
+
+    <!-- CONTROLES -->
+    <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+      <div class="card">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="select-wrapper">
+            <select id="clientSelect" class="select"></select>
+          </span>
+          <span class="select-wrapper">
+            <select id="attackSelect" class="select"></select>
+          </span>
+          <!-- selector de estado -->
+          <span class="select-wrapper">
+            <select id="statusSelect" class="select" title="Filtrar por estado">
+              <option value="">— Estado (todos) —</option>
+            </select>
+          </span>
+
+          <!-- selector de riesgo -->
+          <span class="select-wrapper">
+            <select id="riskSelect" class="select" title="Filtrar por riesgo">
+              <option value="">— Riesgo (todos) —</option>
+              <option value="bajo">Bajo</option>
+              <option value="medio">Medio</option>
+              <option value="alto">Alto</option>
+              <option value="critico">Crítico</option>
+            </select>
+          </span>
+
+          <!-- selector de periodo -->
+          <span class="select-wrapper">
+            <select id="periodSelect" class="select" title="Selecciona el periodo/últimos N">
+              <option value="">— Periodo / Últimos —</option>
+              <option value="24h">Últimas 24 horas</option>
+              <option value="7d">Últimos 7 días</option>
+              <option value="1m">Último mes</option>
+              <option value="3m">Últimos 3 meses</option>
+              <option value="6m">Últimos 6 meses</option>
+              <option value="1y">Último año</option>
+              <option value="10">10 últimos ataques</option>
+              <option value="20" selected>20 últimos ataques</option>
+              <option value="50">50 últimos ataques</option>
+            </select>
+          </span>
+
+          <button id="btnFetch" class="btn">Buscar</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <button id="btnCSV" class="btn ghost">Exportar CSV</button>
+          <button id="btnSimulate" class="btn warn">Simular ataque</button>
+          <span id="status" class="small" style="margin-left:8px"></span>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:280px">
+        <div class="summaries">
+          <div class="summary card">
+            <div class="num" id="countDisplay">—</div>
+            <div class="lbl">Filas devueltas</div>
+          </div>
+          <div class="summary card">
+            <div class="num small" id="lastUpdate">—</div>
+            <div class="lbl">Última actualización</div>
+          </div>
+          <div class="summary card">
+            <div class="num small" id="infoText">UI moderna</div>
+            <div class="lbl">Estado</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="table-wrap card" id="tableWrap" style="margin-top:14px;display:none">
+      <table id="resultsTable" aria-live="polite">
+        <thead id="resultsHead"></thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+      <button id="btnSave" class="btn">Guardar</button>
+      <span class="small">Usa “check/dismiss” por fila; se aplican las transiciones permitidas.</span>
+    </div>
+
+    <div class="log card" id="logArea">Listo.</div>
+  </div>
+
+<script>
+  const clientSelect = document.getElementById("clientSelect");
+  const attackSelect = document.getElementById("attackSelect");
+  const statusSelect = document.getElementById("statusSelect");
+  const riskSelect   = document.getElementById("riskSelect");
+  const periodSelect = document.getElementById("periodSelect");
+  const btnFetch = document.getElementById("btnFetch");
+  const btnCSV = document.getElementById("btnCSV");
+  const btnSimulate = document.getElementById("btnSimulate");
+  const btnSave = document.getElementById("btnSave");
+  const status = document.getElementById("status");
+  const resultsHead = document.getElementById("resultsHead");
+  const resultsBody = document.getElementById("resultsBody");
+  const tableWrap = document.getElementById("tableWrap");
+  const countDisplay = document.getElementById("countDisplay");
+  const lastUpdate = document.getElementById("lastUpdate");
+  const logArea = document.getElementById("logArea");
+
+  const STATUS_MAP = {}; // id_status -> codigo
+  const STATUS_CODE_TO_ID = {}; // codigo -> id_status
+  const pendingChanges = new Map(); // id -> action ("check"/"dismiss")
+
+  function log(msg){
+    const ts = new Date().toLocaleString();
+    logArea.textContent = `[${ts}] ${msg}\n` + logArea.textContent;
+  }
+
+  function escapeHtml(s){
+    if(s===null || s===undefined) return "";
+    return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  async function fetchJSON(url, opts){
+    const r = await fetch(url, opts);
+    if (!r.ok) {
+      const text = await r.text();
+      throw new Error('HTTP ' + r.status + ': ' + text);
+    }
+    return r.json();
+  }
+
+  async function loadClientsAndTypes(){
+    status.innerHTML = '<span class="loader"></span> cargando...';
+    try{
+      const [cResp, tResp, sResp] = await Promise.all([
+        fetchJSON("/api/clients"),
+        fetchJSON("/api/attack-types"),
+        fetchJSON("/api/alert-status")
+      ]);
+
+      if(cResp.ok){
+        clientSelect.innerHTML = `<option value="">— Todos —</option>` + cResp.clients.map(c => `<option value="${c.id}">${escapeHtml(c.nombre)}</option>`).join("");
+      } else {
+        clientSelect.innerHTML = `<option value="">Error</option>`;
+        log("Error cargando clientes: " + JSON.stringify(cResp));
+      }
+
+      if(tResp.ok){
+        attackSelect.innerHTML = `<option value="">— Selecciona tipo —</option>` + tResp.types.map(t => `<option value="${escapeHtml(t.codigo)}">${escapeHtml(t.codigo)}</option>`).join("");
+      } else {
+        attackSelect.innerHTML = `<option value="">Error</option>`;
+        log("Error cargando tipos: " + JSON.stringify(tResp));
+      }
+
+      if(sResp.ok){
+        const opts = sResp.status.map(s => {
+          STATUS_MAP[s.id_status] = s.codigo;
+          STATUS_CODE_TO_ID[s.codigo] = s.id_status;
+          return `<option value="${escapeHtml(s.codigo)}">${escapeHtml(s.codigo)}</option>`;
+        }).join("");
+        statusSelect.innerHTML = `<option value="">— Estado (todos) —</option>` + opts;
+      } else {
+        log("Error cargando estados: " + JSON.stringify(sResp));
+      }
+
+      status.textContent = "";
+    }catch(err){
+      status.textContent = "error";
+      log("loadClientsAndTypes: " + err);
+    }
+  }
+
+  function renderBadge(riesgo){
+    if(!riesgo) return `<span class="badge low">—</span>`;
+    const r = String(riesgo).toLowerCase();
+    if(r.includes("crit") || r.includes("crítico")) return `<span class="badge critical">CRÍTICO</span>`;
+    if(r.includes("high") || r.includes("alto")) return `<span class="badge high">ALTO</span>`;
+    if(r.includes("med") || r.includes("medio")) return `<span class="badge medium">MEDIO</span>`;
+    return `<span class="badge low">BAJO</span>`;
+  }
+
+  function showNoResultsMessage(clientName, attackLabel, periodCode) {
+    const periodMap = {"24h":"las últimas 24h","7d":"los últimos 7 días","1m":"el último mes","3m":"los últimos 3 meses","6m":"los últimos 6 meses","1y":"el último año","10":"los 10 últimos ataques","20":"los 20 últimos ataques","50":"los 50 últimos ataques","": "el criterio seleccionado"};
+    const periodText = periodMap[periodCode] || periodCode || "el periodo indicado";
+    let message;
+    if (clientName && clientName.trim() !== "— Todos —" && clientName.trim() !== "") {
+      message = `El cliente <strong>${escapeHtml(clientName)}</strong> no ha sufrido ningún ataque de tipo <strong>${escapeHtml(attackLabel)}</strong> en ${periodText}.`;
+    } else {
+      message = `No se han encontrado ataques de tipo <strong>${escapeHtml(attackLabel)}</strong> en ${periodText}.`;
+    }
+    tableWrap.style.display = "";
+    tableWrap.innerHTML = `<div class="empty-message card">${message}</div>`;
+    countDisplay.textContent = "0";
+    lastUpdate.textContent = new Date().toLocaleString();
+  }
+
+  function allowedActions(id_status){
+    const code = STATUS_MAP[id_status] || "new";
+    if (code === "new") return { check: true, dismiss: true };
+    if (code === "processing") return { check: false, dismiss: true };
+    return { check: false, dismiss: false }; // finished
+  }
+
+  function renderActionCell(row){
+    const id = row.id ?? row.id_alerta ?? row[Object.keys(row)[0]];
+    const id_status = row.id_status || null;
+    const allow = allowedActions(id_status);
+    const name = `action_${id}`;
+    const checkedCheck = pendingChanges.get(id) === "check" ? "checked" : "";
+    const checkedDismiss = pendingChanges.get(id) === "dismiss" ? "checked" : "";
+    return `
+      <div style="display:flex;gap:6px;align-items:center">
+        <label style="display:flex;gap:4px;opacity:${allow.check?1:0.45}">
+          <input type="radio" name="${name}" value="check" ${allow.check? "" : "disabled"} ${checkedCheck}
+                 onchange="window._onActionChange(${id}, 'check')"> check
+        </label>
+        <label style="display:flex;gap:4px;opacity:${allow.dismiss?1:0.45}">
+          <input type="radio" name="${name}" value="dismiss" ${allow.dismiss? "" : "disabled"} ${checkedDismiss}
+                 onchange="window._onActionChange(${id}, 'dismiss')"> dismiss
+        </label>
+      </div>
+    `;
+  }
+  window._onActionChange = (id, action) => {
+    if(action) pendingChanges.set(id, action);
+  };
+
+  // ----------- RENDER TABLE (añade columna "Reporte" junto a id_status_txt) -----------
+  function renderTable(alerts, columnsOrder) {
+    pendingChanges.clear();
+    if(!alerts || alerts.length === 0){
+      tableWrap.style.display = "none";
+      countDisplay.textContent = "0";
+      lastUpdate.textContent = new Date().toLocaleString();
+      return;
+    }
+
+    tableWrap.innerHTML = `
+      <table id="resultsTable" aria-live="polite">
+        <thead id="resultsHead"></thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    `;
+    const _resultsHead = document.getElementById("resultsHead");
+    const _resultsBody = document.getElementById("resultsBody");
+
+    let keys = Array.isArray(columnsOrder) && columnsOrder.length ? columnsOrder : Object.keys(alerts[0]);
+
+    const attack = (attackSelect.value || "").toLowerCase();
+    if (attack === "phishing") keys = keys.filter(k => k.toLowerCase() !== "risk_level");
+
+    const lower = keys.map(k => k.toLowerCase());
+    const riesgoIdx = lower.indexOf("riesgo");
+    const idStatusIdx = lower.indexOf("id_status_txt");
+
+    let headCells = keys.map(k => `<th>${escapeHtml(k)}</th>`);
+    if (idStatusIdx >= 0) headCells.splice(idStatusIdx + 1, 0, `<th>Reporte</th>`);
+    if (riesgoIdx >= 0) headCells.splice(riesgoIdx+1 + (idStatusIdx >=0 && idStatusIdx <= riesgoIdx ? 1 : 0), 0, `<th>acción</th>`);
+    else headCells.push(`<th>acción</th>`);
+
+    _resultsHead.innerHTML = "<tr>" + headCells.join("") + "</tr>";
+
+    _resultsBody.innerHTML = alerts.map(row => {
+      const tds = keys.map((k) => {
+        const key = k.toLowerCase();
+        let v = row[k];
+
+        if(key.includes("riesgo")) return `<td>${renderBadge(v)}</td>`;
+        if(key === "score_final") return `<td>${escapeHtml(v)}</td>`;
+
+        let s = v;
+        if(typeof s === "string" && s.length > 120) s = s.slice(0,120) + "…";
+        return `<td>${escapeHtml(s)}</td>`;
+      });
+
+      const alertId = row.id || row.ID || row.id_alerta || row["id"];
+      const btnHtml = `<td><button class="btn warn btn-report" data-id="${alertId || ''}" data-attack="${escapeHtml(attack)}" title="Descargar informe">Descargar informe</button></td>`;
+
+      if (idStatusIdx >= 0) tds.splice(idStatusIdx + 1, 0, btnHtml);
+      else tds.push(btnHtml);
+
+      if (riesgoIdx >= 0) {
+        const insertPos = riesgoIdx + 1 + (idStatusIdx >= 0 && idStatusIdx <= riesgoIdx ? 1 : 0);
+        tds.splice(insertPos, 0, `<td>${renderActionCell(row)}</td>`);
+      } else {
+        tds.push(`<td>${renderActionCell(row)}</td>`);
+      }
+
+      return "<tr>" + tds.join("") + "</tr>";
+    }).join("");
+
+    tableWrap.style.display = "";
+    countDisplay.textContent = String(alerts.length);
+    lastUpdate.textContent = new Date().toLocaleString();
+  }
+
+  // Delegación: descarga de informe por fila
+  tableWrap.addEventListener('click', async (ev) => {
+    const btn = ev.target.closest && ev.target.closest('.btn-report');
+    if (!btn) return;
+    const alertId = btn.getAttribute('data-id');
+    const attack = btn.getAttribute('data-attack') || attackSelect.value;
+    if(!alertId){
+      alert('ID de alerta no disponible para esta fila.');
+      return;
+    }
+    try {
+      btn.disabled = true;
+      btn.textContent = 'Descargando...';
+      const url = `/api/report_by_id?attack=${encodeURIComponent(attack)}&alert_id=${encodeURIComponent(alertId)}`;
+      const resp = await fetch(url, { method: 'GET' });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        alert('Error al generar informe: ' + txt);
+        return;
+      }
+      const blob = await resp.blob();
+
+      // === Nombre del archivo: prioriza nuestro header, luego Content-Disposition, luego fallback ===
+      let fileName =
+        resp.headers.get('X-Report-Filename') ||
+        (()=>{
+          const cd = resp.headers.get('Content-Disposition') || '';
+          const m1 = cd.match(/filename\*=UTF-8''([^;]+)/);
+          if (m1 && m1[1]) return decodeURIComponent(m1[1]);
+          const m2 = cd.match(/filename="?([^"]+)"?/);
+          if (m2 && m2[1]) return m2[1];
+          return null;
+        })();
+      if (!fileName) fileName = `informe_${attack}_${alertId}.pdf`;
+
+      const urlBlob = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = urlBlob;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(urlBlob);
+    } catch (err) {
+      console.error(err);
+      alert('Error descargando informe: ' + err);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Descargar informe';
+    }
+  });
+
+  // ---- resto JS (sin cambios) ----
+  async function getAlerts(limit){
+    const client_id = clientSelect.value;
+    const attack = attackSelect.value;
+    const period = periodSelect.value;
+    const statusCode = statusSelect.value;
+    const riskCode   = riskSelect.value;
+    if(!attack) { alert("Selecciona un tipo de ataque."); return; }
+    status.innerHTML = '<span class="loader"></span> consultando...';
+
+    try{
+      const params = new URLSearchParams();
+      if(client_id) params.set("client_id", client_id);
+      params.set("attack", attack);
+      if(period) params.set("period", period);
+      else if(limit) params.set("limit", String(limit));
+      if(statusCode) params.set("status", statusCode);
+      if(riskCode)   params.set("riesgo", riskCode);
+
+      const r = await fetchJSON("/api/alerts?" + params.toString());
+      if(!r.ok) throw new Error(JSON.stringify(r));
+      const columnsOrder = Array.isArray(r.columns) ? r.columns : null;
+
+      if(!r.alerts || r.alerts.length === 0) {
+        const clientName = clientSelect.options[clientSelect.selectedIndex] ? clientSelect.options[clientSelect.selectedIndex].text : "";
+        const attackLabel = attackSelect.options[attackSelect.selectedIndex] ? attackSelect.options[attackSelect.selectedIndex].text : attack;
+        showNoResultsMessage(clientName, attackLabel, period || "");
+      } else {
+        renderTable(r.alerts || [], columnsOrder);
+      }
+
+      status.textContent = "";
+      log(`Buscar: client=${client_id || 'Todos'} attack=${attack} period=${period || ('limit='+limit)} status=${statusCode || 'todos'} riesgo=${riskCode || 'todos'} -> ${r.count} filas`);
+    }catch(err){
+      status.textContent = "error";
+      log("Error getAlerts: " + err);
+      alert("Error al obtener alertas. Mira el log (abajo).");
+    }
+  }
+
+  btnFetch.addEventListener("click", ()=> getAlerts(undefined));
+
+  btnCSV.addEventListener("click", ()=> {
+    const client_id = clientSelect.value;
+    const attack = attackSelect.value;
+    const period = periodSelect.value;
+    const statusCode = statusSelect.value;
+    const riskCode   = riskSelect.value;
+    if(!attack){ alert("Selecciona un tipo de ataque."); return; }
+    const params = new URLSearchParams();
+    if(client_id) params.set("client_id", client_id);
+    params.set("attack", attack);
+    if(period) params.set("period", period); else params.set("limit", "10000");
+    if(statusCode) params.set("status", statusCode);
+    if(riskCode)   params.set("riesgo", riskCode);
+    window.location.href = "/api/alerts.csv?" + params.toString();
+  });
+
+  btnSimulate.addEventListener("click", async ()=>{
+    const client_id = clientSelect.value;
+    const attack = attackSelect.value;
+    if(!client_id){ alert("Selecciona un cliente para simular el ataque."); return; }
+    if(!attack){ alert("Selecciona un tipo de ataque."); return; }
+    btnSimulate.disabled = true;
+    status.innerHTML = '<span class="loader"></span> simulando...';
+    try{
+      const res = await fetch("/api/simulate_attack", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({client_id: parseInt(client_id), attack: attack})
+      });
+      const j = await res.json();
+      if(j.ok){
+        log("Simulación insertada: " + JSON.stringify(j.res));
+        // === NUEVO: si el backend devuelve la fila insertada, la mostramos sola ===
+        if (j.inserted && j.columns) {
+          const row = Object.assign({}, j.inserted);
+          const cols = Array.isArray(j.columns) ? j.columns.slice() : Object.keys(row);
+
+          // Sustituimos id_status por texto legible manteniendo la estética de la tabla
+          const idx = cols.findIndex(c => String(c).toLowerCase() === 'id_status');
+          if (idx >= 0) {
+            row.id_status_txt = STATUS_MAP[row.id_status] || row.id_status;
+            cols[idx] = 'id_status_txt';
+          }
+
+          renderTable([row], cols); // reusa tu renderer sin cambiar estilos
+          tableWrap.style.display = "block";
+          countDisplay.textContent = "1";
+          lastUpdate.textContent = new Date().toLocaleString();
+        } else {
+          // Fallback: comportamiento anterior
+          alert("Simulación insertada correctamente.");
+          getAlerts(20);
+        }
+      } else {
+        log("Simulación error: " + JSON.stringify(j));
+        alert("Error al simular, revisa log");
+      }
+    }catch(err){
+      log("Simulación exception: " + err);
+      alert("Error al simular (revisa log).");
+    } finally {
+      btnSimulate.disabled = false;
+      status.textContent = "";
+    }
+  });
+
+  btnSave.addEventListener("click", async ()=>{
+    const attack = attackSelect.value;
+    if(!attack){ alert("Selecciona un tipo de ataque antes de guardar."); return; }
+    const changes = [];
+    pendingChanges.forEach((action, id) => { changes.push({ id, action }); });
+    if(changes.length === 0){ alert("No hay cambios seleccionados."); return; }
+
+    try{
+      const res = await fetch("/api/alerts/update-status", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ attack, changes })
+      });
+      const j = await res.json();
+      if(j.ok){
+        log(`Guardado estados -> updated=${j.updated}, skipped=${j.skipped}`);
+        alert("Cambios de estado guardados.");
+        pendingChanges.clear();
+        getAlerts();
+      }else{
+        log("Error guardando estados: " + JSON.stringify(j));
+        alert("Error al guardar estados (ver log).");
+      }
+    }catch(err){
+      log("Excepción guardando estados: " + err);
+      alert("Error al guardar estados (ver log).");
+    }
+  });
+
+  // init
+  loadClientsAndTypes();
+</script>
+</body>
+</html>
